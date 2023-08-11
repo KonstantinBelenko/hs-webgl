@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<title>Tag Online</title>
+	<style>
+		body {
+			margin: 0;
+		}
+
+		#menu {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			transform: translate(-50%, -50%);
+		}
+	</style>
+	<link rel="icon" type="image/png" href="/favicon.png">
+	<script src="https://cdn.tailwindcss.com"></script>
+	<script>
+		async function generateRandomName(){
+			let name = "";
+			document.body.style.cursor = 'wait';
+            try {
+                const response = await fetch('https://random-word-api.herokuapp.com/word?number=2');
+                const [word1, word2] = await response.json();
+                name = `${word1}-${word2}`;
+            } catch (error) {
+                console.error('An error occurred while fetching the random word:', error);
+                name = 'DefaultTitle'; // Fallback title in case of an error
+			}
+			document.getElementById("name").value = name;
+			document.body.style.cursor = 'default';
+		}
+	</script>
+</head>
+
+<body>
+	<div id="menu">
+		<form id="startForm" class="flex flex-col items-start gap-2">
+			<input type="text" id="name" name="name" class="outline-none bg-gray-100 px-4 py-2" placeholder="My name is..." required>
+			<button type="submit" class="px-4 py-2 text-center text-white bg-black w-full hover:bg-gray-800 transition-all duration-300">Continue</button>
+			<span class="text-gray-400 text-xs underline cursor-pointer" onclick="generateRandomName()">Get random name</span>
+		</form>
+	</div>
+
+	<script type="module" src="/src/main.ts"></script>
+
+	<div id="infoPanel" class="bottom-left info">AAA</div>
+	<div id="debug" class="top-right info">BBB</div>
+
+	<style>
+		.info {
+			z-index: 100;
+			text-align: left;
+			display: block;
+			color: magenta;
+			font-family: monospace;
+			font-size: 1rem;
+		}
+
+		.bottom-left {
+			position: absolute;
+			left: 10px;
+			bottom: 10px;
+		}
+
+		.top-right {
+			position: absolute;
+			right: 10px;
+			top: 10px;
+		}
+	</style>
+</body>
+
+</html>
