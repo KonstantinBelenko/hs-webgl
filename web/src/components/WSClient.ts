@@ -12,6 +12,7 @@ import * as THREE from 'three';
 
 export default class WSClient {
 
+    // private websocket: WebSocket | null = new WebSocket("wss://black-meadow-2733.fly.dev/connect");
     private websocket: WebSocket | null = new WebSocket("wss://black-meadow-2733.fly.dev/connect");
     private name: string = "";
 

@@ -17,6 +17,7 @@ export default class Player {
     public camera: THREE.PerspectiveCamera | null = null;
     
     // UI
+    private static MAX_DELTA = 0.1; // Maximum allowed delta time in seconds
     private static DEFAULT_CROSSHAIR_COLOR = 'white';
     private crosshair: HTMLElement | null = null;
     private color: string = "";
@@ -24,6 +25,7 @@ export default class Player {
     private nameTag: Text2D | null = null;
 
     // Physics
+    private raycaster: THREE.Raycaster = new THREE.Raycaster();
     public collisionObjects: THREE.Object3D[] = [];
     
     private static GRAVITY = 9.81;
@@ -35,7 +37,6 @@ export default class Player {
     private deceleration: number = 0.9; // Adjust as needed
 
     private isGrounded: boolean = false;
-    private isJumping: boolean = false;
 
     // Movement
     private controls: PointerLockControls | null = null;
@@ -44,6 +45,7 @@ export default class Player {
 
     // Mesh
     public playerMesh: THREE.Mesh | null = null // The public mesh representing the player
+    public playerContainer: THREE.Object3D = new THREE.Object3D();
 
 
     constructor(
@@ -71,6 +73,16 @@ export default class Player {
             this.loadControls();
         }
 
+        // Add the camera and player mesh to the playerContainer
+        if (this.camera) {
+            this.playerContainer.add(this.camera);
+        }
+        if (this.playerMesh) {
+            this.playerContainer.add(this.playerMesh);
+        }
+
+        // Add the playerContainer to the scene
+        this.scene?.add(this.playerContainer);
     }
 
     private loadPlayerMesh(scene: THREE.Scene) {
@@ -81,6 +93,8 @@ export default class Player {
         const material = new THREE.MeshBasicMaterial({ color: this.color }); // Green color for demonstration
         this.playerMesh = new THREE.Mesh(geometry, material);
         scene.add(this.playerMesh);
+
+        this.playerMesh!.position.y -= Player.HEIGHT / 2;
     }
 
     private load2DNameTag() {
@@ -93,6 +107,8 @@ export default class Player {
 
     private loadCamera() {
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        // Adjust the camera position relative to the playerContainer
         this.camera.position.y = Player.HEIGHT;
     }
 
@@ -138,7 +154,6 @@ export default class Player {
     }
 
     public fixedUpdate(delta: number) {
-
         // Update name tag position
         if (this.nameTag) {
             this.nameTag.updateLabelContent(
@@ -146,76 +161,118 @@ export default class Player {
                 this.getLocation().clone().add(new THREE.Vector3(0, 2, 0))
             );
         }
-
-        if (!this.isOwner) return;
     
+        if (!this.isOwner) return;
+
+        delta = Math.min(delta, Player.MAX_DELTA); // clamp the delta
+    
+        this.applyGravity(delta);
+    
+        this.updateDesiredVelocity();
+        this.updatePosition(delta);
+        this.checkGroundCollision();
+        this.updatePlayerMeshPosition();
+
+        if (this.onOwnerMove) this.onOwnerMove(this);
+    }
+    
+    private updateDesiredVelocity() {
         const direction = new THREE.Vector3();
         this.controls!.getDirection(direction); // Get the forward direction of the camera
-
+    
         const desiredVelocity = new THREE.Vector3();
-
         const forward = direction.clone().normalize();
         const right = new THREE.Vector3().crossVectors(this.camera!.up, forward).normalize();
-
-        if (this.keysPressed.has('KeyW')) {
-            desiredVelocity.add(forward);
-        }
-        if (this.keysPressed.has('KeyS')) {
-            desiredVelocity.sub(forward);
-        }
-        if (this.keysPressed.has('KeyA')) {
-            desiredVelocity.add(right);
-        }
-        if (this.keysPressed.has('KeyD')) {
-            desiredVelocity.sub(right);
-        }
-        
+    
+        if (this.keysPressed.has('KeyW')) desiredVelocity.add(forward);
+        if (this.keysPressed.has('KeyS')) desiredVelocity.sub(forward);
+        if (this.keysPressed.has('KeyA')) desiredVelocity.add(right);
+        if (this.keysPressed.has('KeyD')) desiredVelocity.sub(right);
+    
         // Normalize the desired velocity and multiply by max speed
         desiredVelocity.normalize().multiplyScalar(this.maxSpeed);
-
+    
         // Smoothly adjust the current velocity towards the desired velocity
         this.velocity.x += (desiredVelocity.x - this.velocity.x) * this.acceleration;
         this.velocity.z += (desiredVelocity.z - this.velocity.z) * this.acceleration;
-
+    
         // Apply deceleration when no keys are pressed
         if (!this.keysPressed.has('KeyW') && !this.keysPressed.has('KeyS')) {
             this.velocity.x *= this.deceleration;
             this.velocity.z *= this.deceleration;
         }
+    }
     
-        // Gravity
-        this.velocity.y -= Player.GRAVITY * delta;
-    
-        // Update position based on velocity
-        this.camera?.position.add(this.velocity.clone().multiplyScalar(delta));
-    
-        // Apply friction (optional)
-        this.velocity.x *= 0.9;
-        this.velocity.z *= 0.9;
-    
-        // Basic ground check (for demonstration purposes)
-        if (this.camera!.position.y <= Player.HEIGHT) {
-            this.isGrounded = true;
-            this.camera!.position.y = Player.HEIGHT;
-            this.velocity.y = 0;
-        } else {
-            this.isGrounded = false;
+    private applyGravity(delta: number) {
+        if (!this.isGrounded) {
+            this.velocity.y -= Player.GRAVITY * delta;
         }
-
-        // move player mesh
-        let meshPosition = this.camera!.position.clone();
-        this.playerMesh!.position.copy(meshPosition);
-
+    }
+    
+    private checkGroundCollision(): boolean {
+        const rayOffsets = [
+            new THREE.Vector3(0, 0, 0),      // center
+            new THREE.Vector3(0.25, 0, 0.25),  // front right
+            new THREE.Vector3(-0.25, 0, 0.25), // front left
+            new THREE.Vector3(0.25, 0, -0.25), // back right
+            new THREE.Vector3(-0.25, 0, -0.25) // back left
+        ];
+        
+        let closestDistance = Infinity;
+        let closestIntersection: THREE.Intersection | null = null;
+    
+        for (const offset of rayOffsets) {
+            this.raycaster.set(this.playerContainer.position.clone().add(offset), new THREE.Vector3(0, -1, 0));
+            const allMeshes: THREE.Mesh[] = [];
+            this.collisionObjects.forEach(obj => {
+                obj.traverse(child => {
+                    if (child instanceof THREE.Mesh) {
+                        allMeshes.push(child);
+                    }
+                });
+            });
+            const intersections = this.raycaster.intersectObjects(allMeshes, true);
+    
+            if (intersections.length > 0 && intersections[0].distance < closestDistance) {
+                closestDistance = intersections[0].distance;
+                closestIntersection = intersections[0];
+            }
+        }
+    
+        if (closestIntersection && closestDistance < 0.6) {
+            this.playerContainer.position.y = closestIntersection.point.y + Player.HEIGHT / 2;
+            
+            // Only set the vertical velocity to 0 if moving downward
+            if (this.velocity.y < 0) {
+                this.velocity.y = 0;
+            }
+    
+            return true;
+        }
+    
+        return false;
+    }
+    
+    
+    
+    private updatePosition(delta: number) {
+        if (this.isGrounded) {
+            this.velocity.y = 0;
+        }
+        this.playerContainer.position.add(this.velocity.clone().multiplyScalar(delta));
+    }
+    
+    
+    private updatePlayerMeshPosition() {
         if (this.camera) {
             this.playerMesh!.position.copy(this.camera.position);
             this.playerMesh!.position.y -= Player.HEIGHT / 2; // Adjust to ensure the base of the mesh aligns with the ground
         }
-
-        if (this.onOwnerMove) this.onOwnerMove(this);
     }
+    
 
     public getLocation(): THREE.Vector3 {
-        return this.playerMesh!.position;
+        return this.playerContainer.position;
     }
 
     public getLocationVector(): Vector3 {
@@ -228,8 +285,7 @@ export default class Player {
     }
 
     public getRotation(): THREE.Euler {
-        // use mesh rotation
-        return this.playerMesh!.rotation;
+        return this.playerContainer.rotation;
     }
 
     public getRotationVector(): Vector3 {
@@ -259,7 +315,8 @@ export default class Player {
     }
 
     public setLocation(location: THREE.Vector3) {
-        this.playerMesh!.position.copy(location);
+        this.playerContainer.position.copy(location);
+        // Update the name tag's position as well
         this.nameTag?.updateLabelContent(
             this.name,
             this.getLocation().clone().add(new THREE.Vector3(0, 2, 0))
@@ -267,7 +324,7 @@ export default class Player {
     }
 
     public setRotation(rotation: THREE.Euler) {
-        this.playerMesh!.rotation.copy(rotation);
+        this.playerContainer.rotation.copy(rotation);
     }
 
     public getColor(): string {
