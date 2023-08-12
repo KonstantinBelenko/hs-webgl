@@ -2,11 +2,11 @@
   "name": "proj",
   "version": "1.0.3",
   "description": "",
-  "main": "index.js",
+  "main": "main.js",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "wsdev": "nodemon --watch src/server --exec \"ts-node src/server/main.ts\""
+    "build": "vite build"
   },
   "keywords": [],
   "author": "",
