@@ -24,7 +24,7 @@ export class Player {
     private playerBodyMesh: THREE.Mesh | null = null;
     private isOnGround: boolean = false;
     
-    private JUMP_FORCE: number = 5;
+    private JUMP_FORCE: number = 7;
     
     private MAX_SPEED: number = 5;
     private ACCELERATION: number = 2;
@@ -130,8 +130,6 @@ export class Player {
 
     public fixedUpdate() {
         if (this.isOwner) {
-            console.log(this.name);
-
             if (this.playerBody && Math.abs(this.playerBody.velocity.y) < 0.15) {
                 this.isOnGround = true;
             } else {
