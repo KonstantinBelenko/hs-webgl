@@ -12,16 +12,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ammojs3": "^0.0.8",
+    "cannon": "^0.6.2",
+    "cannon-es": "^0.20.0",
     "express": "^4.18.2",
-    "express-ws": "^5.0.2",
     "gsap": "^3.12.2",
-    "nodemon": "^3.0.1",
     "stats.js": "^0.17.0",
     "three": "^0.155.0",
-    "unique-names-generator": "^4.7.1",
-    "uuid": "^9.0.0",
-    "ws": "^8.13.0"
+    "three-octree": "^0.6.1",
+    "three-to-cannon": "^4.3.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.17",
@@ -29,6 +27,7 @@
     "@types/node": "^20.4.9",
     "@types/three": "^0.155.0",
     "@types/ws": "^8.5.5",
+    "dependency-cruiser": "^13.1.2",
     "ts-node": "^10.9.1",
     "typescript": "^5.1.6",
     "vite": "^4.4.9"
