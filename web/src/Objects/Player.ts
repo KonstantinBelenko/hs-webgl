@@ -32,6 +32,7 @@ export class Player {
     private currentSpeed: number = 0;
     
     // Controls
+    private isRunning: boolean = false;
     private pointerControls: PointerLockControls | null = null;
     private controls = {
         moveForward: 0,
@@ -108,6 +109,8 @@ export class Player {
                 case 83: this.controls.moveForward = 1; break;  // S key
                 case 65: this.controls.moveLeft = 1; break;  // A key
                 case 68: this.controls.moveRight = 1; break;  // D key
+                // Run on shift
+                case 16: this.isRunning = true; break;  // Shift key
             }
         });
         
@@ -117,6 +120,7 @@ export class Player {
                 case 83: this.controls.moveForward = 0; break;
                 case 65: this.controls.moveLeft = 0; break;
                 case 68: this.controls.moveRight = 0; break;
+                case 16: this.isRunning = false; break;
             }
         });
     }
@@ -142,7 +146,7 @@ export class Player {
                 inputDirection.applyEuler(this.camera!.rotation);
         
                 // Increase the current speed by the acceleration value
-                this.currentSpeed = Math.min(this.currentSpeed + this.ACCELERATION, this.MAX_SPEED);
+                this.currentSpeed = Math.min(this.currentSpeed + this.ACCELERATION, this.MAX_SPEED * (this.isRunning ? 2 : 1));
                 this.velocity?.copy(
                     new CANNON.Vec3(inputDirection.x, inputDirection.y, inputDirection.z)
                 ).scale(this.currentSpeed, this.velocity);

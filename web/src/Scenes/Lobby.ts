@@ -128,7 +128,7 @@ export class Lobby {
         this.ownerPlayer!.fixedUpdate();
 
         if (this.ownerPlayer?.getLocationVector().y! < -15) {
-            this.ownerPlayer?.setLocation(new THREE.Vector3(0, 30, 0));
+            this.ownerPlayer?.setLocation(new THREE.Vector3(10, 5, 0));
         }
 
         this.onAnimate();
