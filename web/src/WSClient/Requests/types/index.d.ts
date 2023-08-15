@@ -5,4 +5,5 @@ export enum RequestType {
     MOVE_OBJECT = "move-object",
     MOVE_PLAYER = "move-player",
     SPAWN_PLAYER = "spawn-player",
+    TAG_PLAYER = "tag-player",
 }

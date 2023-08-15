@@ -8,6 +8,7 @@ import { SpawnPlayerResponse } from './Responses/spawnPlayerResponse.js';
 import * as THREE from 'three';
 import { ResponseType } from './Responses/types/index.d.js';
 import { Vector3 } from './types/index.d.js';
+import { TagPlayerRequest } from './Requests/tagPlayerRequest.js';
 
 export class WSClient {
 
@@ -21,6 +22,7 @@ export class WSClient {
     private onLobbyJoined: Function | null = null;
     private onPlayerSpawnedCallback: Function | null = null;
     private onPlayerMoveCallback: Function | null = null;
+    private onPlayerWasTaggedCallback: Function | null = null;
     
     constructor(name: string, onPlayerSpawnedCallback?: (playerResp: SpawnPlayerResponse) => void) {
         if (name.trim() === "") throw new Error("Name cannot be empty");
@@ -80,6 +82,14 @@ export class WSClient {
 
             if (this.onPlayerMoveCallback) this.onPlayerMoveCallback(movePlayer.name, location, rotation);
         }
+
+        if (type === ResponseType.TAG_PLAYER) {
+            console.log("Player was tagged: ", res.TagPlayerResponse());
+            let data = res.TagPlayerResponse();
+            if (this.onPlayerWasTaggedCallback) {
+                this.onPlayerWasTaggedCallback(data.taggedPlayerName, data.taggerPlayerName)
+            }
+        }
     }
 
     private onClosed(data: CloseEvent) {
@@ -134,7 +144,20 @@ export class WSClient {
         ));
     }
 
+    public broadcastTagPlayer(taggedName: string, taggerName: string) {
+        this.send(new TagPlayerRequest(
+            this.lobbyId,
+            taggedName,
+            taggerName,
+        ))
+    }
+
     public setOnPlayerMoveResponse(onPlayerMove: (name: string, location: THREE.Vector3, rotation: THREE.Euler) => void) {
         this.onPlayerMoveCallback = onPlayerMove;
     }
+
+    public setOnPlayerWasTagged(onPlayerWasTaggedCallback: (taggedName: string, taggerName: string) => void) {
+        this.onPlayerWasTaggedCallback = onPlayerWasTaggedCallback;
+    }
+
 }

@@ -6,6 +6,7 @@ import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { Map } from "../Objects/Map.js";
 import * as CANNON from 'cannon-es';
 import Text2D from "../Objects/Text.js";
+import { PlayerLookInteraction } from "../Interaction/PlayerLookInteraction.js";
 
 export class Lobby {
 
@@ -19,19 +20,31 @@ export class Lobby {
     private renderer = new THREE.WebGLRenderer({ antialias: true });
     private cssRenderer = new CSS2DRenderer();
     
-    // Players
+    // Players & Callbacks
+    private isAdmin: boolean = false;
     public ownerPlayer: Player | null = null;
     private onOwnerSpawnCallback: (player: Player) => void;
     private onOwnerMoveCallback: (player: Player) => void;
+    private onOwnerTagSomeoneCallback: (taggedPlayerName: string, taggerPlayerName: string) => void;
 
     // Other
     private stats: Stats = new Stats();
     private onAnimate: () => void;
 
-    constructor(playerName: string, lobbyId: string, onOwnerSpawnCallback: (player: Player) => void, onPlayerMove: (player: Player) => void, onAnimate: () => void) {
+    constructor(
+        playerName: string, 
+        lobbyId: string,
+        isAdmin: boolean,
+        onOwnerSpawnCallback: (player: Player) => void, 
+        onPlayerMove: (player: Player) => void, 
+        onAnimate: () => void,
+        onPlayerTagSomeone: (taggedPlayerName: string, taggerPlayerName: string) => void,
+    ) {
         this.lobbyId = lobbyId;
+        this.isAdmin = isAdmin;
         this.onOwnerSpawnCallback = onOwnerSpawnCallback;
         this.onOwnerMoveCallback = onPlayerMove;
+        this.onOwnerTagSomeoneCallback = onPlayerTagSomeone;
         this.onAnimate = onAnimate;
         document.body.appendChild( this.stats.dom );
 
@@ -50,12 +63,7 @@ export class Lobby {
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.toneMappingExposure = 1;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        // this.renderer.gammaOutput = true;
-        // this.renderer.gammaFactor = 2.2;
         document.body.appendChild( this.renderer.domElement );
-
-        // Grid helper
-        // this.scene.add(new THREE.GridHelper(100, 100, "red", "#282928"));
 
         // HDRI
         new HDRI("/assets/hdri/clear_sky.hdr", this.renderer, this.scene);
@@ -91,7 +99,17 @@ export class Lobby {
 
     private loadPlayer(name: string) {
 
-        this.ownerPlayer = new Player(name, true, this.world, this.scene, this.cssRenderer, this.onOwnerMoveCallback);
+        this.ownerPlayer = new Player(
+            name, 
+            true,
+            this.isAdmin,
+            this.world, 
+            this.scene, 
+            this.cssRenderer,
+            this.otherPlayers,
+            this.onOwnerMoveCallback,
+            this.onOwnerTagSomeoneCallback,
+        );
         this.onOwnerSpawnCallback(this.ownerPlayer);
 
         // Player spawn position
@@ -101,10 +119,11 @@ export class Lobby {
     }
 
     // THIS FUNCTION SPAWNS OTHER PLAYERS
-    public spawnOtherPlayer(name: string, position: THREE.Vector3, rotation: THREE.Euler) {
-        const player = new Player(name, false, this.world, this.scene, this.cssRenderer);
+    public spawnOtherPlayer(name: string, isTagged: boolean, position: THREE.Vector3, rotation: THREE.Euler) {
+        const player = new Player(name, false, false, this.world, this.scene, this.cssRenderer);
         player.setLocation(position);
         player.setRotation(rotation);
+        player.setTagged(isTagged);
         this.otherPlayers.push(player);
     }
 
@@ -136,5 +155,27 @@ export class Lobby {
         this.renderer.render( this.scene, this.ownerPlayer?.camera! );
         this.cssRenderer.render( this.scene, this.ownerPlayer?.camera! );
         this.stats.end();
+    }
+    
+    public tagPlayer(taggedPlayerName: string, taggerPlayerName: string) {
+        let ownerName = this.ownerPlayer?.getName();
+
+        if (ownerName === taggedPlayerName) {
+            this.ownerPlayer?.setTagged(true);
+        }
+
+        if (ownerName === taggerPlayerName) {
+            this.ownerPlayer?.setTagged(false);
+        }
+
+        this.otherPlayers.forEach(player => {
+            if (player.getName() === taggedPlayerName) {
+                player.setTagged(true);
+            }
+
+            if (player.getName() === taggerPlayerName) {
+                player.setTagged(false);
+            }
+        });
     }
 }

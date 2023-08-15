@@ -4,12 +4,18 @@ import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { PlayerCrosshair } from "../UI/PlayerCrosshair.js";
 import { PlayerNameTag } from "../UI/PlayerNameTag.js";
 import * as CANNON from 'cannon-es';
+import { PlayerLookInteraction } from "../Interaction/PlayerLookInteraction.js";
 
 export class Player {
 
+    // General
     private name: string = "";
     private isOwner: boolean = false;
     private scene: THREE.Scene | null = null;
+
+    // Game mechanics
+    private IsTagged = false;
+    private lookingAtPlayer: Player | null = null;
 
     // camera
     public camera: THREE.PerspectiveCamera | null = null;
@@ -17,6 +23,7 @@ export class Player {
     // UI
     private nameTag: PlayerNameTag | null = null;   
     private NAME_TAG_OFFSET: number = 1.5;
+    private crosshair: PlayerCrosshair | null = null;
     
     // Physics
     private velocity: CANNON.Vec3 | null = null;
@@ -32,6 +39,7 @@ export class Player {
     private currentSpeed: number = 0;
     
     // Controls
+    private playerLookInteraction: PlayerLookInteraction | null = null;
     private isRunning: boolean = false;
     private pointerControls: PointerLockControls | null = null;
     private controls = {
@@ -43,18 +51,21 @@ export class Player {
     
     // Mesh
     private PLAYER_HEIGHT: number = 0.9;
-    public playerMesh: THREE.Mesh | null = null // The public mesh representing the player
     
     // Callbacks
     private onOwnerMoveCallback: ((player: Player) => void) | null = null;
+    private onOwnerTaggedCallback: ((taggedPlayerName: string, taggerPlayerName: string) => void) | null = null;
 
     constructor(
         name: string, 
-        isOwner: boolean, 
+        isOwner: boolean,
+        isAdmin: boolean,
         world: CANNON.World,
         scene: THREE.Scene,
         renderer: CSS2DRenderer,
-        onOwnerMoveCallback?: (player: Player) => void
+        otherPlayers?: Player[],
+        onOwnerMoveCallback?: (player: Player) => void,
+        onOwnerTaggedCallback?: (taggedPlayerName: string, taggerPlayerName: string) => void
     ) {
         this.name = name;
         this.isOwner = isOwner;
@@ -74,19 +85,31 @@ export class Player {
         this.nameTag = new PlayerNameTag(name, this.playerBody.position.clone().vadd(new CANNON.Vec3(0, this.NAME_TAG_OFFSET, 0)), scene, renderer);
         
         if (isOwner) {
-            new PlayerCrosshair("white");
+            this.crosshair = new PlayerCrosshair("white");
             this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            if (otherPlayers) {
+                this.playerLookInteraction = new PlayerLookInteraction(
+                    this.camera,
+                    this.crosshair,
+                    otherPlayers
+                )
+            }
             this.initMovementControls();
+
+            if (isAdmin) {
+                this.setTagged(true);
+            }
         }
 
         // visualize player body
         this.playerBodyMesh = new THREE.Mesh(
             new THREE.SphereGeometry(0.5, 32, 32),
-            new THREE.MeshBasicMaterial({ color: "pink" })
+            new THREE.MeshBasicMaterial({ color: "green" })
         );
         this.scene.add(this.playerBodyMesh);
 
         if (onOwnerMoveCallback) this.onOwnerMoveCallback = onOwnerMoveCallback;
+        if (onOwnerTaggedCallback) this.onOwnerTaggedCallback = onOwnerTaggedCallback;
     }
 
     private initMovementControls() {
@@ -96,6 +119,15 @@ export class Player {
         this.pointerControls = new PointerLockControls(this.camera, document.body);
         document.addEventListener('click', () => {
             this.pointerControls?.lock();
+
+            if (this.lookingAtPlayer !== null && this.IsTagged) {
+                this.IsTagged = false;
+                this.lookingAtPlayer.setTagged(true);
+                this.playerLookInteraction?.setDefaultActionUI();
+                if (this.onOwnerTaggedCallback) {
+                    this.onOwnerTaggedCallback(this.lookingAtPlayer.getName(), this.name);
+                }
+            } 
         });
 
         // Jump controls
@@ -134,7 +166,7 @@ export class Player {
 
     public fixedUpdate() {
         if (this.isOwner) {
-            if (this.playerBody && Math.abs(this.playerBody.velocity.y) < 0.15) {
+            if (this.playerBody && Math.abs(this.playerBody.velocity.y) < 0.2) {
                 this.isOnGround = true;
             } else {
                 this.isOnGround = false;
@@ -162,6 +194,12 @@ export class Player {
     
             this.camera!.position.set(this.playerBody!.position.x, this.playerBody!.position.y + this.PLAYER_HEIGHT, this.playerBody!.position.z);
     
+            if (this.IsTagged) {
+                if (this.playerLookInteraction) {
+                    this.lookingAtPlayer = this.playerLookInteraction.checkPlayerLook();
+                }
+            }
+
             if (this.onOwnerMoveCallback) this.onOwnerMoveCallback(this);
         } else {
             this.playerBody!.velocity.x = 0;
@@ -174,6 +212,12 @@ export class Player {
             this.playerBody!.position.y,
             this.playerBody!.position.z,
         ));
+
+        if (this.getTagged()) {
+            this.playerBodyMesh!.material = new THREE.MeshBasicMaterial({ color: "red" });
+        } else {
+            this.playerBodyMesh!.material = new THREE.MeshBasicMaterial({ color: "green" });
+        }
     }
 
     public getLocationVector(): { x: number, y: number, z: number } {
@@ -216,4 +260,16 @@ export class Player {
         this.playerBody?.quaternion.setFromEuler(rotation.x, rotation.y, rotation.z);
     }
 
+    public getMesh(): THREE.Mesh {
+        if (!this.playerBodyMesh) throw new Error("Player body mesh is null");
+        return this.playerBodyMesh;
+    }
+
+    public getTagged(): boolean {
+        return this.IsTagged;
+    }
+
+    public setTagged(tagged: boolean) {
+        this.IsTagged = tagged;
+    }
 }

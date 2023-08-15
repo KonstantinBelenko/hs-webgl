@@ -27,6 +27,7 @@ export class GameClient {
             this.lobby = new Lobby(
                 this.playerName,
                 lobbyId,
+                true,
                 // On owner spawn
                 player => this.WSClient?.broadcastOwnerSpawn(
                     player.getLocationVector(),
@@ -41,7 +42,9 @@ export class GameClient {
                     player.getName(),
                 ),
                 // On animate
-                this.renderInfoPanel.bind(this)
+                this.renderInfoPanel.bind(this),
+                // On player tagged someone
+                (tagged: string, tagger: string) => this.WSClient?.broadcastTagPlayer(tagged, tagger),
             );
             navigator.clipboard.writeText(lobbyId);
         });
@@ -51,6 +54,9 @@ export class GameClient {
                 location,
                 rotation,
             );
+        });
+        this.WSClient.setOnPlayerWasTagged((tagged: string, tagger: string) => {
+            if (this.lobby) this.lobby.tagPlayer(tagged, tagger);
         });
     }
 
@@ -64,6 +70,7 @@ export class GameClient {
             this.lobby = new Lobby(
                 this.playerName,
                 id,
+                false,
                 // On owner spawn
                 player => this.WSClient?.broadcastOwnerSpawn(
                     player.getLocationVector(),
@@ -78,6 +85,8 @@ export class GameClient {
                     player.getName(),
                 ),
                 this.renderInfoPanel.bind(this),
+                // On player tagged someone
+                (tagged: string, tagger: string) => this.WSClient?.broadcastTagPlayer(tagged, tagger),
             )
         })
         this.WSClient.setOnPlayerMoveResponse((name: string, location: THREE.Vector3, rotation: THREE.Euler) => {
@@ -86,6 +95,9 @@ export class GameClient {
                 location,
                 rotation,
             );
+        });
+        this.WSClient.setOnPlayerWasTagged((tagged: string, tagger: string) => {
+            if (this.lobby) this.lobby.tagPlayer(tagged, tagger);
         });
     }
 
@@ -98,12 +110,15 @@ export class GameClient {
         this.infoPanel.innerText = `
             Name: ${this.playerName}
             Admin: ${this.isAdmin}
+            Tagged: ${this.lobby?.ownerPlayer?.getTagged() ? "Yes" : "No"}
+            TO RUN - PRESS Left Shift
         `
     }
 
     public spawnLobbyPlayer(
         player: {
-            name: string, 
+            name: string,
+            isTagged: boolean,
             location: { x: number, y: number, z: number },
             rotation: { x: number, y: number, z: number },
         }
@@ -111,9 +126,9 @@ export class GameClient {
         if (!this.lobby) throw new Error("Lobby is null");
         this.lobby.spawnOtherPlayer(
             player.name,
+            player.isTagged,
             new THREE.Vector3(player.location.x, player.location.y, player.location.z),
             new THREE.Euler(player.rotation.x, player.rotation.y, player.rotation.z),
         );
     }
-
 }

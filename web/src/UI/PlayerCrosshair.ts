@@ -15,4 +15,7 @@ export class PlayerCrosshair {
         document.body.appendChild(this.crosshair);
     }
 
+    public setColor(color: string) {
+        this.crosshair.style.background = color;
+    }
 }

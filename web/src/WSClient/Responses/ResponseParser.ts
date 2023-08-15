@@ -5,6 +5,7 @@ import { SpawnPlayerResponse } from './spawnPlayerResponse.js';
 import { RoomJoinedResponse } from './roomJoinedResponse.js';
 import { MoveObjectResponse } from "./moveObjectResponse.js";
 import { MovePlayerResponse } from "./movePlayerResponse.js";
+import { TagPlayerResponse } from "./tagPlayerResponse.js";
 
 export class ResponseParser {
 
@@ -40,6 +41,10 @@ export class ResponseParser {
 
     public MovePlayerResponse(): MovePlayerResponse {
         return this.data as MovePlayerResponse;
+    }
+
+    public TagPlayerResponse(): TagPlayerResponse {
+        return this.data as TagPlayerResponse;
     }
 
 }
