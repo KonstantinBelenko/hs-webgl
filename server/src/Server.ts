@@ -6,7 +6,6 @@ import RequestParser from "./components/Requests/RequestParser";
 import Player from "./components/Player";
 import RoomJoinedResponse from "./components/Responses/roomJoinedResponse";
 import { RequestType } from "./components/Requests/requestTypes";
-import { SpawnPlayerRequest } from "./components/Requests/spawnPlayerRequest";
 import { ObjectTypes } from "./components/Responses/objectTypes";
 import SpawnPlayerResponse from "./components/Responses/spawnPlayerResponse";
 
@@ -37,6 +36,7 @@ export default class Server {
         if (type === RequestType.CREATE_ROOM) {
             let req = parser.createLobbyRequest();
             let player = new Player(ws, req.name, true);
+            player.setTagged(true);
             let room = new Room(player);
             this.rooms.set(room.id, room);
         }
@@ -59,7 +59,8 @@ export default class Server {
                         p.rotation,
                         p.scale,
                         ObjectTypes.PLAYER,
-                        p.name
+                        p.name,
+                        p.isTagged,
                     ));
                 });
             } else {
@@ -91,6 +92,25 @@ export default class Server {
                 player?.setLocation(req.location);
                 player?.setRotation(req.rotation);
                 room.broadcastMovePlayer(player);
+            }
+        }
+
+        if (type !== RequestType.MOVE_PLAYER) {
+            console.log(type);
+        }
+
+        if (type === RequestType.TAG_PLAYER) {
+            console.log('tag player request received');
+            let req = parser.TagPlayerRequest();
+            let room = this.rooms.get(req.roomId);
+            if (room) {
+                let tagger = room.getPlayer(req.taggerPlayerName);
+                tagger.setTagged(false);
+                
+                let tagged = room.getPlayer(req.taggedPlayerName);
+                tagged.setTagged(true);
+
+                room.broadcastPlayerTagged(req.taggedPlayerName, req.taggerPlayerName);
             }
         }
     }   

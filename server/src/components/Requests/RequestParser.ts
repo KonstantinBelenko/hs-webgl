@@ -5,6 +5,7 @@ import { SpawnObjectRequest } from './spawnObjectRequest';
 import { SpawnPlayerRequest } from './spawnPlayerRequest';
 import MoveObjectRequest from './moveObjectRequest';
 import MovePlayerRequest from './movePlayerRequest';
+import { TagPlayerRequest } from "./tagPlayerRequest";
 
 export default class RequestParser {
 
@@ -40,6 +41,10 @@ export default class RequestParser {
 
     public MovePlayerRequest(): MovePlayerRequest {
         return this.data as MovePlayerRequest;
+    }
+
+    public TagPlayerRequest(): TagPlayerRequest {
+        return this.data as TagPlayerRequest;
     }
 
 }

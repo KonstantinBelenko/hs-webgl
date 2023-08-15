@@ -4,6 +4,7 @@ import SpawnPlayerResponse from "./Responses/spawnPlayerResponse";
 import { ObjectTypes } from './Responses/objectTypes';
 import RoomCreatedResponse from './Responses/roomCreatedResponse';
 import MovePlayerResponse from "./Responses/movePlayerResponse";
+import { TagPlayerResponse } from "./Responses/tagPlayerRespnse";
 
 export default class Room {
 
@@ -38,7 +39,8 @@ export default class Room {
                 player.rotation,
                 player.scale,
                 ObjectTypes.PLAYER,
-                player.name
+                player.name,
+                player.isTagged,
             ))
         });
     }
@@ -57,6 +59,17 @@ export default class Room {
                 player.name,
                 player.location,
                 player.rotation,
+            ));
+        });
+    }
+
+    public broadcastPlayerTagged (taggedName: string, taggerName: string) {
+        if (this.players.size === 1) return;
+
+        this.players.forEach(p => {
+            p.send(new TagPlayerResponse(
+                taggedName,
+                taggerName
             ));
         });
     }

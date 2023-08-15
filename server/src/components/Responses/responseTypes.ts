@@ -5,4 +5,5 @@ export enum ResponseType {
     SPAWN_PLAYER = "spawn-player",
     MOVE_OBJECT = "move-object",
     MOVE_PLAYER = "move-player",
+    TAG_PLAYER = "tag-player",
 }

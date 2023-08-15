@@ -11,6 +11,8 @@ export default class Player {
     public isAdmin: boolean = false;
     public ws: any;
 
+    public isTagged = false;
+
     constructor (ws: any, name: string, isAdmin: boolean = false) {
         this.ws = ws;
         this.name = name;
@@ -57,6 +59,10 @@ export default class Player {
 
     public send(data: BaseResponse) {
         this.ws.send(JSON.stringify(data.get()));
+    }
+
+    public setTagged (tagged: boolean) {
+        this.isTagged = tagged;
     }
 
 }

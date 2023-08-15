@@ -8,4 +8,6 @@ export enum RequestType {
     MOVE_PLAYER = "move-player",
 
     LOBBY_CREATED = "room-created",
+
+    TAG_PLAYER = "tag-player",
 }
