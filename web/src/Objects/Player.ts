@@ -190,21 +190,26 @@ export class Player {
                 this.isOnGround = false;
             }
     
-            const inputDirection = new THREE.Vector3(this.controls.moveRight - this.controls.moveLeft, 0, this.controls.moveForward - this.controls.moveBackward);
-            if (!inputDirection.equals(new THREE.Vector3(0, 0, 0))) {
-                inputDirection.normalize();
-                inputDirection.applyEuler(this.camera!.rotation);
-        
-                // Increase the current speed by the acceleration value
-                this.currentSpeed = Math.min(this.currentSpeed + this.ACCELERATION, this.MAX_SPEED * (this.isRunning ? 2 : 1));
-                this.velocity?.copy(
-                    new CANNON.Vec3(inputDirection.x, inputDirection.y, inputDirection.z)
-                ).scale(this.currentSpeed, this.velocity);
+            if (this.isStunned) {
+                this.playerBody!.velocity.x = 0;
+                this.playerBody!.velocity.z = 0;
             } else {
-                // Decelerate if no movement input is given
-                this.currentSpeed = Math.max(this.currentSpeed - this.DECELERATION, 0);
-                // Here, we maintain the direction of velocity, but just scale it down
-                this.velocity?.scale(this.currentSpeed / (this.velocity?.length() || 1), this.velocity);
+                const inputDirection = new THREE.Vector3(this.controls.moveRight - this.controls.moveLeft, 0, this.controls.moveForward - this.controls.moveBackward);
+                if (!inputDirection.equals(new THREE.Vector3(0, 0, 0))) {
+                    inputDirection.normalize();
+                    inputDirection.applyEuler(this.camera!.rotation);
+            
+                    // Increase the current speed by the acceleration value
+                    this.currentSpeed = Math.min(this.currentSpeed + this.ACCELERATION, this.MAX_SPEED * (this.isRunning ? 2 : 1));
+                    this.velocity?.copy(
+                        new CANNON.Vec3(inputDirection.x, inputDirection.y, inputDirection.z)
+                    ).scale(this.currentSpeed, this.velocity);
+                } else {
+                    // Decelerate if no movement input is given
+                    this.currentSpeed = Math.max(this.currentSpeed - this.DECELERATION, 0);
+                    // Here, we maintain the direction of velocity, but just scale it down
+                    this.velocity?.scale(this.currentSpeed / (this.velocity?.length() || 1), this.velocity);
+                }
             }
         
             this.playerBody!.velocity.x = this.velocity!.x;
