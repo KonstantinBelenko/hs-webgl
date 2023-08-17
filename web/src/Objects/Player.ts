@@ -316,6 +316,7 @@ export class Player {
 
     public stun(seconds: number) {
         this.isStunned = true;
+        this.isRunning = false;  // Reset the running state
         this.controls = {
             moveForward: 0,
             moveBackward: 0,
