@@ -311,6 +311,12 @@ export class Player {
 
     public stun(seconds: number) {
         this.isStunned = true;
+        this.controls = {
+            moveForward: 0,
+            moveBackward: 0,
+            moveLeft: 0,
+            moveRight: 0,
+        }
         this.audioPlayer?.playSoundAtIndex(0);
         setTimeout(() => {
             this.isStunned = false;
