@@ -4,7 +4,7 @@ export class Arms {
 
         // open "/assets/textures/left_click.gif" to whole screen
         let leftClick = document.createElement("img");
-        leftClick.src = "/assets/textures/left_click.gif";
+        leftClick.src = "/assets/textures/run_fx.gif";
         leftClick.style.position = "absolute";
         leftClick.style.top = "0";
         leftClick.style.left = "0";

@@ -6,7 +6,7 @@ import { PlayerNameTag } from "../UI/PlayerNameTag.js";
 import * as CANNON from 'cannon-es';
 import { PlayerLookInteraction } from "../Interaction/PlayerLookInteraction.js";
 import { CameraBop } from '../Interaction/CameraBop.js';
-import { ScoreDisplay } from "../UI/ScoreDisplay.js";
+import { AudioPlayer } from "../Utils/AudioPlayer.js";
 
 export class Player {
 
@@ -30,6 +30,9 @@ export class Player {
     private NAME_TAG_OFFSET: number = 1.5;
     private crosshair: PlayerCrosshair | null = null;
 
+    // Sounds
+    public audioPlayer: AudioPlayer | null = null;
+
     // Physics
     private velocity: CANNON.Vec3 | null = null;
     private playerBody: CANNON.Body | null = null;
@@ -44,6 +47,7 @@ export class Player {
     private currentSpeed: number = 0;
     
     // Controls
+    private isStunned: boolean = false;
     private playerLookInteraction: PlayerLookInteraction | null = null;
     private isRunning: boolean = false;
     private pointerControls: PointerLockControls | null = null;
@@ -104,6 +108,9 @@ export class Player {
                 )
             }
             this.initMovementControls();
+            this.audioPlayer = new AudioPlayer([
+                "/assets/sfx/stun.ogg",
+            ]);
         }
 
         // visualize player body
@@ -123,7 +130,7 @@ export class Player {
         // Pointer lock controls
         this.pointerControls = new PointerLockControls(this.camera, document.body);
         document.addEventListener('click', () => {
-            if (this.gameOver) return;
+            if (this.gameOver || this.isStunned) return;
 
             this.pointerControls?.lock();
 
@@ -139,12 +146,12 @@ export class Player {
 
         // Jump controls
         document.addEventListener('keydown', (e) => {
-            if (this.gameOver) return;
+            if (this.gameOver || this.isStunned) return;
             if (e.code == 'Space') this.jump();
         });
 
         document.addEventListener('keydown', (event) => {
-            if (this.gameOver) return;
+            if (this.gameOver || this.isStunned) return;
             switch (event.keyCode) {
                 case 87: this.controls.moveBackward = 1; break;  // W key
                 case 83: this.controls.moveForward = 1; break;  // S key
@@ -300,5 +307,13 @@ export class Player {
 
     public unlockPointerControls() {
         this.pointerControls?.unlock();
+    }
+
+    public stun(seconds: number) {
+        this.isStunned = true;
+        this.audioPlayer?.playSoundAtIndex(0);
+        setTimeout(() => {
+            this.isStunned = false;
+        }, seconds * 1000);
     }
 }

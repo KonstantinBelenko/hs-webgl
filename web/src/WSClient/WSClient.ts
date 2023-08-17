@@ -90,7 +90,6 @@ export class WSClient {
         }
 
         if (type === ResponseType.TAG_PLAYER) {
-            console.log("Player was tagged: ", res.TagPlayerResponse());
             let data = res.TagPlayerResponse();
             if (this.onPlayerWasTaggedCallback) {
                 this.onPlayerWasTaggedCallback(data.taggedPlayerName, data.taggerPlayerName)

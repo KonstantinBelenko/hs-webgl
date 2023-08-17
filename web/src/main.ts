@@ -1,5 +1,6 @@
 import { GameClient } from "./GameClient.js";
 import { StartingMenu } from "./StartingMenu.js";
+import { Arms } from "./Graphics/Arms.js";
 
 
 let gameClient = new GameClient();

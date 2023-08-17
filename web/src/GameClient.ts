@@ -3,6 +3,7 @@ import { Lobby } from "./Scenes/Lobby.js";
 import { WSClient } from "./WSClient/WSClient.js";
 import { ScoreDisplay } from "./UI/ScoreDisplay.js";
 import { TimerDisplay } from "./UI/TimerDisplay.js";
+import { TaggedIndicator } from './UI/TaggedIndicator.js';
 
 export class GameClient {
 
@@ -13,13 +14,14 @@ export class GameClient {
 
     private lobby: Lobby | null = null;
     private WSClient: WSClient | null = null;
-    
+
     // UI
     private infoPanel: HTMLElement = document.getElementById("infoPanel") as HTMLElement;
     private scoreDisplay: ScoreDisplay | null = null;
     private timerDisplay: TimerDisplay | null = null;
+    private taggedIndicator: TaggedIndicator = new TaggedIndicator();
 
-    constructor() {}
+    constructor() { }
 
     public async startLobby(name: string) {
         console.log("Starting lobby");
@@ -48,7 +50,9 @@ export class GameClient {
                 // On animate
                 this.renderInfoPanel.bind(this),
                 // On player tagged someone
-                (tagged: string, tagger: string) => this.WSClient?.broadcastTagPlayer(tagged, tagger),
+                (tagged: string, tagger: string) => {
+                    this.WSClient?.broadcastTagPlayer(tagged, tagger);
+                },
                 // On admin start game
                 this.startGame.bind(this),
             );
@@ -63,6 +67,11 @@ export class GameClient {
         });
         this.WSClient.setOnPlayerWasTagged((tagged: string, tagger: string) => {
             if (this.lobby) this.lobby.tagPlayer(tagged, tagger);
+            if (tagged === this.playerName) {
+                this.taggedIndicator.show();
+                this.lobby?.ownerPlayer?.stun(1);
+            }
+            if (tagger === this.playerName) this.taggedIndicator.hide();
         });
         this.WSClient.setOnScoreAndTimeCallback((score: number, time: number) => {
             this.setPlayerScore(score);
@@ -72,7 +81,7 @@ export class GameClient {
         });
         this.WSClient.setOnGameStartedCallback(() => {
             this.scoreDisplay = new ScoreDisplay(0);
-            this.timerDisplay = new TimerDisplay(60*3);
+            this.timerDisplay = new TimerDisplay(60 * 3);
         });
         this.WSClient.setOnEndGameCallback((scores: { name: string, score: number }[]) => {
             this.lobby?.gameOver(scores);
@@ -105,7 +114,9 @@ export class GameClient {
                 ),
                 this.renderInfoPanel.bind(this),
                 // On player tagged someone
-                (tagged: string, tagger: string) => this.WSClient?.broadcastTagPlayer(tagged, tagger),
+                (tagged: string, tagger: string) => {
+                    this.WSClient?.broadcastTagPlayer(tagged, tagger);
+                },
             )
         })
         this.WSClient.setOnPlayerMoveResponse((name: string, location: THREE.Vector3, rotation: THREE.Euler) => {
@@ -117,6 +128,11 @@ export class GameClient {
         });
         this.WSClient.setOnPlayerWasTagged((tagged: string, tagger: string) => {
             if (this.lobby) this.lobby.tagPlayer(tagged, tagger);
+            if (tagged === this.playerName) {
+                this.taggedIndicator.show();
+                this.lobby?.ownerPlayer?.stun(1);
+            }
+            if (tagger === this.playerName) this.taggedIndicator.hide();
         });
         this.WSClient.setOnScoreAndTimeCallback((score: number, time: number) => {
             this.setPlayerScore(score);
@@ -126,7 +142,7 @@ export class GameClient {
         });
         this.WSClient.setOnGameStartedCallback(() => {
             this.scoreDisplay = new ScoreDisplay(0);
-            this.timerDisplay = new TimerDisplay(60*3);
+            this.timerDisplay = new TimerDisplay(60 * 3);
         });
         this.WSClient.setOnEndGameCallback((scores: { name: string, score: number }[]) => {
             this.lobby?.gameOver(scores);
