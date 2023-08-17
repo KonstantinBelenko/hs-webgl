@@ -39,7 +39,10 @@ export class Player {
     private playerBodyMesh: THREE.Mesh | null = null;
     private isOnGround: boolean = false;
     
+    private jumpCount: number = 0;
+    private MAX_JUMPS: number = 2;
     private JUMP_FORCE: number = 7;
+    private isCollidingWithGround: boolean = false;
     
     private MAX_SPEED: number = 5;
     private ACCELERATION: number = 2;
@@ -111,6 +114,17 @@ export class Player {
             this.audioPlayer = new AudioPlayer([
                 "/assets/sfx/stun.ogg",
             ]);
+
+            // Player ground collision
+            world.addEventListener('beginContact', (event: any) => {
+                this.isCollidingWithGround = true;
+                this.jumpCount = 0;
+            });
+            
+            world.addEventListener('endContact', (event: any) => {
+                this.isCollidingWithGround = false;
+            });
+            
         }
 
         // visualize player body
@@ -176,20 +190,14 @@ export class Player {
     }
 
     private jump() {
-        if (this.isOnGround && this.playerBody) {
-            this.playerBody.velocity.y = this.JUMP_FORCE;  // Set the y velocity directly
-            this.isOnGround = false;
+        if (this.isCollidingWithGround || this.jumpCount < this.MAX_JUMPS) {
+            this.playerBody!.velocity.y = this.JUMP_FORCE;
+            this.jumpCount++;
         }
     }
 
     public fixedUpdate(delta: number) {
         if (this.isOwner) {
-            if (this.playerBody && Math.abs(this.playerBody.velocity.y) < 0.2) {
-                this.isOnGround = true;
-            } else {
-                this.isOnGround = false;
-            }
-    
             if (this.isStunned) {
                 this.playerBody!.velocity.x = 0;
                 this.playerBody!.velocity.z = 0;
@@ -214,7 +222,6 @@ export class Player {
         
             this.playerBody!.velocity.x = this.velocity!.x;
             this.playerBody!.velocity.z = this.velocity!.z;
-    
 
             let bopOffset = { x: 0, y: 0, z: 0 }
             if (this.isOnGround && this.cameraBop) {
@@ -222,7 +229,7 @@ export class Player {
             }
             let newPosY = this.playerBody!.position.y + this.PLAYER_HEIGHT + bopOffset.y;
             this.camera!.position.set(this.playerBody!.position.x, newPosY, this.playerBody!.position.z);
-    
+
             if (this.IsTagged) {
                 if (this.playerLookInteraction) {
                     this.lookingAtPlayer = this.playerLookInteraction.checkPlayerLook();
