@@ -5,7 +5,7 @@ export interface IBaseRequest {
     roomId: string;
 }
 
-export default class BaseRequest {
+export class BaseRequest {
     type: string;
     roomId: string;
 

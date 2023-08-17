@@ -1,5 +1,5 @@
 import { Vector3 } from "../utils";
-import BaseResponse, { IBaseResponse } from "./baseResponse";
+import { BaseResponse, IBaseResponse } from "./baseResponse";
 import { ResponseType } from "./responseTypes";
 
 export interface IMoveObjectResponse extends IBaseResponse {
@@ -8,7 +8,7 @@ export interface IMoveObjectResponse extends IBaseResponse {
     rotation: Vector3;
 }
 
-export default class MoveObjectResponse extends BaseResponse {
+export class MoveObjectResponse extends BaseResponse {
 
     private id: string;
     private location: Vector3;

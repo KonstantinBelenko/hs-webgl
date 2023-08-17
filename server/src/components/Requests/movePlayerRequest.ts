@@ -1,12 +1,12 @@
 import { Vector3 } from "../utils";
-import MoveObjectRequest, { IMoveObjectRequest } from "./moveObjectRequest";
+import { MoveObjectRequest, IMoveObjectRequest } from "./moveObjectRequest";
 import { RequestType } from "./requestTypes";
 
 export interface IMovePlayerRequest extends IMoveObjectRequest {
     name: string;
 }
 
-export default class MovePlayerRequest extends MoveObjectRequest {
+export class MovePlayerRequest extends MoveObjectRequest {
 
     public name: string;
 

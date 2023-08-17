@@ -6,4 +6,7 @@ export enum ResponseType {
     MOVE_OBJECT = "move-object",
     MOVE_PLAYER = "move-player",
     TAG_PLAYER = "tag-player",
+    START_GAME = "start-game",
+    SCORE_AND_TIME = "score-and-time",
+    END_GAME = "end-game",
 }

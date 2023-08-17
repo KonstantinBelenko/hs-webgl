@@ -1,4 +1,4 @@
-import BaseRequest, { IBaseRequest } from "./baseRequest";
+import { BaseRequest, IBaseRequest } from "./baseRequest";
 import { RequestType } from "./requestTypes";
 import { Vector3 } from "./spawnObjectRequest";
 
@@ -8,7 +8,7 @@ export interface IMoveObjectRequest extends IBaseRequest {
     rotation: Vector3;
 }
 
-export default class MoveObjectRequest extends BaseRequest {
+export class MoveObjectRequest extends BaseRequest {
 
     public id: string;
     public location: Vector3;

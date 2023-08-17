@@ -1,8 +1,7 @@
-import BaseRequest from "./Requests/baseRequest.js";
-import BaseResponse from "./Responses/baseResponse.js";
+import { BaseResponse } from "./Responses/baseResponse.js";
 import { IPlayer, Vector3 } from "./utils.js";
 
-export default class Player {
+export class Player {
 
     public name: string = "";
     public location: Vector3 = { x: 0, y: 0, z: 0 };
@@ -12,6 +11,7 @@ export default class Player {
     public ws: any;
 
     public isTagged = false;
+    public score = 0;
 
     constructor (ws: any, name: string, isAdmin: boolean = false) {
         this.ws = ws;
@@ -63,6 +63,22 @@ export default class Player {
 
     public setTagged (tagged: boolean) {
         this.isTagged = tagged;
+    }
+
+    public setScore (score: number) {
+        this.score = score;
+    }
+
+    public getScore (): number {
+        return this.score;
+    }
+
+    public addScore () {
+        this.score += 10;
+    }
+
+    public deductScore () {
+        this.score -= 10;
     }
 
 }

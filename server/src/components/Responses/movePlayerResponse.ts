@@ -1,12 +1,12 @@
 import { Vector3 } from "../utils";
-import MoveObjectResponse, { IMoveObjectResponse } from "./moveObjectResponse";
+import { MoveObjectResponse, IMoveObjectResponse } from "./moveObjectResponse";
 import { ResponseType } from "./responseTypes";
 
 export interface IMovePlayerResponse extends IMoveObjectResponse {
     name: string;
 }
 
-export default class MovePlayerResponse extends MoveObjectResponse {
+export class MovePlayerResponse extends MoveObjectResponse {
     
         private name: string;
     

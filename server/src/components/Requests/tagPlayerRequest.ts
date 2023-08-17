@@ -1,4 +1,4 @@
-import BaseRequest, { IBaseRequest } from "./baseRequest";
+import { BaseRequest, IBaseRequest } from "./baseRequest";
 import { RequestType } from "./requestTypes";
 
 interface ITagPlayerRequest extends IBaseRequest {

@@ -1,11 +1,11 @@
-import BaseRequest, { IBaseRequest } from "./baseRequest";
+import { BaseRequest, IBaseRequest } from "./baseRequest";
 import { RequestType } from "./requestTypes";
 
 interface ICreateRoomRequest extends IBaseRequest {
     name: string;
 }
 
-export default class CreateRoomRequest extends BaseRequest {
+export class CreateRoomRequest extends BaseRequest {
     name: string;
 
     constructor(name: string) {

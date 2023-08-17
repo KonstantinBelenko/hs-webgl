@@ -1,12 +1,12 @@
-import BaseRequest, { IBaseRequest } from "./baseRequest";
+import { BaseRequest, IBaseRequest } from "./baseRequest";
 import { RequestType } from "./requestTypes";
 
-interface IJoinLobbyRequest extends IBaseRequest {
+interface IJoinRoomRequest extends IBaseRequest {
     name: string;
     roomId: string;
 }
 
-export default class JoinLobbyRequest extends BaseRequest {
+export class JoinRoomRequest extends BaseRequest {
     name: string;
     roomId: string;
 
@@ -16,7 +16,7 @@ export default class JoinLobbyRequest extends BaseRequest {
         this.roomId = roomId;
     }
 
-    public override get(): IJoinLobbyRequest {
+    public override get(): IJoinRoomRequest {
         return {
             ...super.get(),
             name: this.name,

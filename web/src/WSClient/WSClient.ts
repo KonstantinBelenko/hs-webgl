@@ -9,21 +9,27 @@ import * as THREE from 'three';
 import { ResponseType } from './Responses/types/index.d.js';
 import { Vector3 } from './types/index.d.js';
 import { TagPlayerRequest } from './Requests/tagPlayerRequest.js';
+import { StartGameRequest } from './Requests/startGameRequest.js';
 
 export class WSClient {
 
     // private websocket: WebSocket | null = new WebSocket("wss://black-meadow-2733.fly.dev/connect");
-    private websocket: WebSocket | null = new WebSocket("wss://black-meadow-2733.fly.dev/connect");
+    private websocket: WebSocket | null = new WebSocket("ws://localhost:8080/connect");
     private name: string = "";
 
     // Lobby management
     private lobbyId: string = "";
+
+    // Callbacks
     private onLobbyCreated: Function | null = null;
     private onLobbyJoined: Function | null = null;
     private onPlayerSpawnedCallback: Function | null = null;
     private onPlayerMoveCallback: Function | null = null;
     private onPlayerWasTaggedCallback: Function | null = null;
-    
+    private onGameStartedCallback: Function | null = null;
+    private onScoreAndTimeCallback: Function | null = null;
+    private onEndGameCallback: Function | null = null;
+
     constructor(name: string, onPlayerSpawnedCallback?: (playerResp: SpawnPlayerResponse) => void) {
         if (name.trim() === "") throw new Error("Name cannot be empty");
 
@@ -90,6 +96,26 @@ export class WSClient {
                 this.onPlayerWasTaggedCallback(data.taggedPlayerName, data.taggerPlayerName)
             }
         }
+
+        if (type === ResponseType.START_GAME) {
+            console.log("Game started");
+            if (this.onGameStartedCallback) this.onGameStartedCallback();
+        }
+
+        if (type === ResponseType.SCORE_AND_TIME) {
+            console.log("Score and time");
+            let data = res.ScoreAndTimeResponse();
+            if (this.onScoreAndTimeCallback) this.onScoreAndTimeCallback(
+                data.score,
+                data.time,
+            );
+        }
+
+        if (type === ResponseType.END_GAME) {
+            console.log("Game ended");
+            let data = res.EndGameResponse();
+            if (this.onEndGameCallback) this.onEndGameCallback(data.scores);
+        }
     }
 
     private onClosed(data: CloseEvent) {
@@ -152,12 +178,28 @@ export class WSClient {
         ))
     }
 
+    public broadcastStartGame() {
+        this.send(new StartGameRequest( this.lobbyId ))
+    }
+
     public setOnPlayerMoveResponse(onPlayerMove: (name: string, location: THREE.Vector3, rotation: THREE.Euler) => void) {
         this.onPlayerMoveCallback = onPlayerMove;
     }
 
     public setOnPlayerWasTagged(onPlayerWasTaggedCallback: (taggedName: string, taggerName: string) => void) {
         this.onPlayerWasTaggedCallback = onPlayerWasTaggedCallback;
+    }
+
+    public setOnGameStartedCallback(onGameStarted: () => void) {
+        this.onGameStartedCallback = onGameStarted;
+    }
+
+    public setOnScoreAndTimeCallback(onScoreAndTime: (score: number, time: number) => void) {
+        this.onScoreAndTimeCallback = onScoreAndTime;
+    }
+
+    public setOnEndGameCallback(onEndGame: (scores: { name: string, score: number }[]) => void) {
+        this.onEndGameCallback = onEndGame;
     }
 
 }

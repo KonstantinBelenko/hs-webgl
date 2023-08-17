@@ -5,7 +5,7 @@ export interface IBaseResponse {
     type: string;
 }
 
-export default class BaseResponse {
+export class BaseResponse {
     type: string;
 
     constructor(type: ResponseType) {

@@ -6,7 +6,7 @@ import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { Map } from "../Objects/Map.js";
 import * as CANNON from 'cannon-es';
 import Text2D from "../Objects/Text.js";
-import { PlayerLookInteraction } from "../Interaction/PlayerLookInteraction.js";
+import { EndGameMenu } from "../UI/EndGameMenu.js";
 
 export class Lobby {
 
@@ -19,6 +19,7 @@ export class Lobby {
     private world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82, 0) });
     private renderer = new THREE.WebGLRenderer({ antialias: true });
     private cssRenderer = new CSS2DRenderer();
+    private clock = new THREE.Clock();
     
     // Players & Callbacks
     private isAdmin: boolean = false;
@@ -26,6 +27,7 @@ export class Lobby {
     private onOwnerSpawnCallback: (player: Player) => void;
     private onOwnerMoveCallback: (player: Player) => void;
     private onOwnerTagSomeoneCallback: (taggedPlayerName: string, taggerPlayerName: string) => void;
+    private onAdminStartGame?: () => void;
 
     // Other
     private stats: Stats = new Stats();
@@ -39,12 +41,14 @@ export class Lobby {
         onPlayerMove: (player: Player) => void, 
         onAnimate: () => void,
         onPlayerTagSomeone: (taggedPlayerName: string, taggerPlayerName: string) => void,
+        onAdminStartGame?: () => void,
     ) {
         this.lobbyId = lobbyId;
         this.isAdmin = isAdmin;
         this.onOwnerSpawnCallback = onOwnerSpawnCallback;
         this.onOwnerMoveCallback = onPlayerMove;
         this.onOwnerTagSomeoneCallback = onPlayerTagSomeone;
+        this.onAdminStartGame = onAdminStartGame;
         this.onAnimate = onAnimate;
         document.body.appendChild( this.stats.dom );
 
@@ -109,6 +113,7 @@ export class Lobby {
             this.otherPlayers,
             this.onOwnerMoveCallback,
             this.onOwnerTagSomeoneCallback,
+            this.onAdminStartGame,
         );
         this.onOwnerSpawnCallback(this.ownerPlayer);
 
@@ -138,13 +143,14 @@ export class Lobby {
         requestAnimationFrame(this.animate.bind(this));
         this.stats.begin();
 
+        let delta = this.clock.getDelta();
         this.world.fixedStep();
 
         this.otherPlayers.forEach(player => {
-            player.fixedUpdate();
+            player.fixedUpdate(delta);
         });
 
-        this.ownerPlayer!.fixedUpdate();
+        this.ownerPlayer!.fixedUpdate(delta);
 
         if (this.ownerPlayer?.getLocationVector().y! < -15) {
             this.ownerPlayer?.setLocation(new THREE.Vector3(10, 5, 0));
@@ -177,5 +183,15 @@ export class Lobby {
                 player.setTagged(false);
             }
         });
+    }
+
+    public gameOver(scores: { name: string, score: number }[]) {
+        alert("Game over");
+        console.log(scores);
+
+        this.ownerPlayer?.setGameOver(true);
+        this.ownerPlayer?.unlockPointerControls();
+
+        new EndGameMenu(scores, this.isAdmin);
     }
 }

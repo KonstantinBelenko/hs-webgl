@@ -1,13 +1,14 @@
-import BaseRequest from "./baseRequest";
-import CreateLobbyRequest from "./createRoomRequest";
-import JoinRoomRequest from "./joinRoomRequest";
+import { BaseRequest } from "./baseRequest";
+import { CreateRoomRequest } from "./createRoomRequest";
+import { JoinRoomRequest } from "./joinRoomRequest";
 import { SpawnObjectRequest } from './spawnObjectRequest';
 import { SpawnPlayerRequest } from './spawnPlayerRequest';
-import MoveObjectRequest from './moveObjectRequest';
-import MovePlayerRequest from './movePlayerRequest';
+import { MoveObjectRequest } from './moveObjectRequest';
+import { MovePlayerRequest } from './movePlayerRequest';
 import { TagPlayerRequest } from "./tagPlayerRequest";
+import { StartGameRequest } from "./startGameRequest";
 
-export default class RequestParser {
+export class RequestParser {
 
     private data: object;
 
@@ -19,8 +20,8 @@ export default class RequestParser {
         return this.data as BaseRequest;
     }
 
-    public createLobbyRequest(): CreateLobbyRequest {
-        return this.data as CreateLobbyRequest;
+    public createLobbyRequest(): CreateRoomRequest {
+        return this.data as CreateRoomRequest;
     }
 
     public joinLobbyRequest(): JoinRoomRequest {
@@ -45,6 +46,10 @@ export default class RequestParser {
 
     public TagPlayerRequest(): TagPlayerRequest {
         return this.data as TagPlayerRequest;
+    }
+
+    public StartGameRequest(): StartGameRequest {
+        return this.data as StartGameRequest;
     }
 
 }

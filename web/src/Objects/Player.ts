@@ -5,6 +5,8 @@ import { PlayerCrosshair } from "../UI/PlayerCrosshair.js";
 import { PlayerNameTag } from "../UI/PlayerNameTag.js";
 import * as CANNON from 'cannon-es';
 import { PlayerLookInteraction } from "../Interaction/PlayerLookInteraction.js";
+import { CameraBop } from '../Interaction/CameraBop.js';
+import { ScoreDisplay } from "../UI/ScoreDisplay.js";
 
 export class Player {
 
@@ -14,6 +16,8 @@ export class Player {
     private scene: THREE.Scene | null = null;
 
     // Game mechanics
+    private gameStarted: boolean = false;
+    private gameOver: boolean = false;
     private IsTagged = false;
     private lookingAtPlayer: Player | null = null;
 
@@ -21,10 +25,11 @@ export class Player {
     public camera: THREE.PerspectiveCamera | null = null;
     
     // UI
+    private cameraBop: CameraBop | null = null;
     private nameTag: PlayerNameTag | null = null;   
     private NAME_TAG_OFFSET: number = 1.5;
     private crosshair: PlayerCrosshair | null = null;
-    
+
     // Physics
     private velocity: CANNON.Vec3 | null = null;
     private playerBody: CANNON.Body | null = null;
@@ -55,6 +60,7 @@ export class Player {
     // Callbacks
     private onOwnerMoveCallback: ((player: Player) => void) | null = null;
     private onOwnerTaggedCallback: ((taggedPlayerName: string, taggerPlayerName: string) => void) | null = null;
+    private onOwnerStartGameCallback: (() => void) | null = null;
 
     constructor(
         name: string, 
@@ -65,11 +71,13 @@ export class Player {
         renderer: CSS2DRenderer,
         otherPlayers?: Player[],
         onOwnerMoveCallback?: (player: Player) => void,
-        onOwnerTaggedCallback?: (taggedPlayerName: string, taggerPlayerName: string) => void
+        onOwnerTaggedCallback?: (taggedPlayerName: string, taggerPlayerName: string) => void,
+        onOwnerStartGameCallback?: () => void,
     ) {
         this.name = name;
         this.isOwner = isOwner;
         this.scene = scene;
+        if (onOwnerStartGameCallback) this.onOwnerStartGameCallback = onOwnerStartGameCallback;
 
         // Init physics
         this.velocity = new CANNON.Vec3();
@@ -85,6 +93,7 @@ export class Player {
         this.nameTag = new PlayerNameTag(name, this.playerBody.position.clone().vadd(new CANNON.Vec3(0, this.NAME_TAG_OFFSET, 0)), scene, renderer);
         
         if (isOwner) {
+            this.cameraBop = new CameraBop(0.01, 10);
             this.crosshair = new PlayerCrosshair("white");
             this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             if (otherPlayers) {
@@ -95,10 +104,6 @@ export class Player {
                 )
             }
             this.initMovementControls();
-
-            if (isAdmin) {
-                this.setTagged(true);
-            }
         }
 
         // visualize player body
@@ -118,6 +123,8 @@ export class Player {
         // Pointer lock controls
         this.pointerControls = new PointerLockControls(this.camera, document.body);
         document.addEventListener('click', () => {
+            if (this.gameOver) return;
+
             this.pointerControls?.lock();
 
             if (this.lookingAtPlayer !== null && this.IsTagged) {
@@ -132,10 +139,12 @@ export class Player {
 
         // Jump controls
         document.addEventListener('keydown', (e) => {
+            if (this.gameOver) return;
             if (e.code == 'Space') this.jump();
         });
 
         document.addEventListener('keydown', (event) => {
+            if (this.gameOver) return;
             switch (event.keyCode) {
                 case 87: this.controls.moveBackward = 1; break;  // W key
                 case 83: this.controls.moveForward = 1; break;  // S key
@@ -143,6 +152,8 @@ export class Player {
                 case 68: this.controls.moveRight = 1; break;  // D key
                 // Run on shift
                 case 16: this.isRunning = true; break;  // Shift key
+                // Start game on F2
+                case 113: if (this.onOwnerStartGameCallback && !this.gameStarted) this.onOwnerStartGameCallback();
             }
         });
         
@@ -164,7 +175,7 @@ export class Player {
         }
     }
 
-    public fixedUpdate() {
+    public fixedUpdate(delta: number) {
         if (this.isOwner) {
             if (this.playerBody && Math.abs(this.playerBody.velocity.y) < 0.2) {
                 this.isOnGround = true;
@@ -192,7 +203,13 @@ export class Player {
             this.playerBody!.velocity.x = this.velocity!.x;
             this.playerBody!.velocity.z = this.velocity!.z;
     
-            this.camera!.position.set(this.playerBody!.position.x, this.playerBody!.position.y + this.PLAYER_HEIGHT, this.playerBody!.position.z);
+
+            let bopOffset = { x: 0, y: 0, z: 0 }
+            if (this.isOnGround && this.cameraBop) {
+                bopOffset = this.cameraBop.update(delta, this.currentSpeed);
+            }
+            let newPosY = this.playerBody!.position.y + this.PLAYER_HEIGHT + bopOffset.y;
+            this.camera!.position.set(this.playerBody!.position.x, newPosY, this.playerBody!.position.z);
     
             if (this.IsTagged) {
                 if (this.playerLookInteraction) {
@@ -271,5 +288,17 @@ export class Player {
 
     public setTagged(tagged: boolean) {
         this.IsTagged = tagged;
+    }
+
+    public setGameStarted(gameStarted: boolean) {
+        this.gameStarted = gameStarted;
+    }
+
+    public setGameOver(gameOver: boolean) {
+        this.gameOver = gameOver;
+    }
+
+    public unlockPointerControls() {
+        this.pointerControls?.unlock();
     }
 }

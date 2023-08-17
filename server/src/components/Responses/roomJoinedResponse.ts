@@ -1,11 +1,11 @@
-import BaseResponse, { IBaseResponse } from "./baseResponse";
+import { BaseResponse, IBaseResponse } from "./baseResponse";
 import { ResponseType } from "./responseTypes";
 
 export interface IRoomJoinedResponse extends IBaseResponse {
     roomId: string;
 }
 
-export default class RoomJoinedResponse extends BaseResponse {
+export class RoomJoinedResponse extends BaseResponse {
 
     public roomId: string;
 

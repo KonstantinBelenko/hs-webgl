@@ -1,5 +1,5 @@
 import { Vector3 } from "../utils";
-import BaseResponse, { IBaseResponse } from "./baseResponse";
+import { BaseResponse, IBaseResponse } from "./baseResponse";
 import { ResponseType } from "./responseTypes";
 
 export interface ISpawnObjectResponse extends IBaseResponse {
@@ -9,7 +9,7 @@ export interface ISpawnObjectResponse extends IBaseResponse {
     id: string;
 }
 
-export default class SpawnObjectResponse extends BaseResponse {
+export class SpawnObjectResponse extends BaseResponse {
 
     private location: Vector3;
     private rotation: Vector3;

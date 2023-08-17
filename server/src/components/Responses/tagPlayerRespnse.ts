@@ -1,4 +1,4 @@
-import BaseResponse, { IBaseResponse } from "./baseResponse";
+import { BaseResponse, IBaseResponse } from "./baseResponse";
 import { ResponseType } from "./responseTypes";
 
 interface ITagPlayerResponse extends IBaseResponse {

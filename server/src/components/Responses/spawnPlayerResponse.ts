@@ -1,13 +1,13 @@
 import { Vector3 } from "../utils";
 import { ResponseType } from "./responseTypes";
-import SpawnObjectResponse, { ISpawnObjectResponse } from "./spawnObjectResponse";
+import { SpawnObjectResponse, ISpawnObjectResponse } from "./spawnObjectResponse";
 
 interface ISpawnPlayerResponse extends ISpawnObjectResponse {
     name: string;
     isTagged: boolean;
 }
 
-export default class SpawnPlayerResponse extends SpawnObjectResponse {
+export class SpawnPlayerResponse extends SpawnObjectResponse {
 
     private name: string;
     private isTagged: boolean;

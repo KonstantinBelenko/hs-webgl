@@ -10,4 +10,5 @@ export enum RequestType {
     LOBBY_CREATED = "room-created",
 
     TAG_PLAYER = "tag-player",
+    START_GAME = "start-game",
 }

@@ -6,6 +6,9 @@ import { RoomJoinedResponse } from './roomJoinedResponse.js';
 import { MoveObjectResponse } from "./moveObjectResponse.js";
 import { MovePlayerResponse } from "./movePlayerResponse.js";
 import { TagPlayerResponse } from "./tagPlayerResponse.js";
+import { StartGameResponse } from "./startGameResponse.js";
+import { ScoreAndTimeResponse } from './scoreAndTimeResponse.js';
+import { EndGameResponse } from "./endGameResponse.js";
 
 export class ResponseParser {
 
@@ -45,6 +48,18 @@ export class ResponseParser {
 
     public TagPlayerResponse(): TagPlayerResponse {
         return this.data as TagPlayerResponse;
+    }
+
+    public StartGameResponse(): StartGameResponse {
+        return this.data as StartGameResponse;
+    }
+
+    public ScoreAndTimeResponse(): ScoreAndTimeResponse {
+        return this.data as ScoreAndTimeResponse;
+    }
+
+    public EndGameResponse(): EndGameResponse {
+        return this.data as EndGameResponse;
     }
 
 }

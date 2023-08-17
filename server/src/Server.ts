@@ -1,13 +1,13 @@
 import express from "express";
 import expressWs from "express-ws";
-import Room from "./components/Room";
+import { Room } from "./components/Room";
 import { WebSocket } from "ws";
-import RequestParser from "./components/Requests/RequestParser";
-import Player from "./components/Player";
-import RoomJoinedResponse from "./components/Responses/roomJoinedResponse";
+import { RequestParser } from "./components/Requests/RequestParser";
+import { Player } from "./components/Player";
+import { RoomJoinedResponse } from "./components/Responses/roomJoinedResponse";
 import { RequestType } from "./components/Requests/requestTypes";
 import { ObjectTypes } from "./components/Responses/objectTypes";
-import SpawnPlayerResponse from "./components/Responses/spawnPlayerResponse";
+import { SpawnPlayerResponse } from "./components/Responses/spawnPlayerResponse";
 
 export default class Server {
     private port: number;
@@ -33,10 +33,13 @@ export default class Server {
         const parser = new RequestParser(message);
         const type = parser.baseRequest().type;
 
+        if (type !== RequestType.MOVE_PLAYER) {
+            console.log(type);
+        }
+
         if (type === RequestType.CREATE_ROOM) {
             let req = parser.createLobbyRequest();
             let player = new Player(ws, req.name, true);
-            player.setTagged(true);
             let room = new Room(player);
             this.rooms.set(room.id, room);
         }
@@ -95,10 +98,6 @@ export default class Server {
             }
         }
 
-        if (type !== RequestType.MOVE_PLAYER) {
-            console.log(type);
-        }
-
         if (type === RequestType.TAG_PLAYER) {
             console.log('tag player request received');
             let req = parser.TagPlayerRequest();
@@ -111,6 +110,17 @@ export default class Server {
                 tagged.setTagged(true);
 
                 room.broadcastPlayerTagged(req.taggedPlayerName, req.taggerPlayerName);
+            }
+        }
+
+        if (type === RequestType.START_GAME) {
+            console.log('start game request received');
+            let req = parser.StartGameRequest();
+            let room = this.rooms.get(req.roomId);
+            if (room) {
+                room.broadcastGameStarted();
+                room.tagRandomPlayer();
+                room.startGame();
             }
         }
     }   
