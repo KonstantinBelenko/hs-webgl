@@ -7,6 +7,7 @@ import * as CANNON from 'cannon-es';
 import { PlayerLookInteraction } from "../Interaction/PlayerLookInteraction.js";
 import { CameraBop } from '../Interaction/CameraBop.js';
 import { AudioPlayer } from "../Utils/AudioPlayer.js";
+import { SettingsMenu } from "../UI/SettingsMenu.js";
 
 export class Player {
 
@@ -50,6 +51,8 @@ export class Player {
     private currentSpeed: number = 0;
     
     // Controls
+    private settingsMenu: SettingsMenu | null = null;
+    private sensetivity: number | null = null;
     private isStunned: boolean = false;
     private playerLookInteraction: PlayerLookInteraction | null = null;
     private isRunning: boolean = false;
@@ -76,6 +79,7 @@ export class Player {
         world: CANNON.World,
         scene: THREE.Scene,
         renderer: CSS2DRenderer,
+        settingsMenu?: SettingsMenu,
         otherPlayers?: Player[],
         onOwnerMoveCallback?: (player: Player) => void,
         onOwnerTaggedCallback?: (taggedPlayerName: string, taggerPlayerName: string) => void,
@@ -100,6 +104,7 @@ export class Player {
         this.nameTag = new PlayerNameTag(name, this.playerBody.position.clone().vadd(new CANNON.Vec3(0, this.NAME_TAG_OFFSET, 0)), scene, renderer);
         
         if (isOwner) {
+            if (settingsMenu) this.settingsMenu = settingsMenu;
             this.cameraBop = new CameraBop(0.01, 10);
             this.crosshair = new PlayerCrosshair("white");
             this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -113,6 +118,7 @@ export class Player {
             this.initMovementControls();
             this.audioPlayer = new AudioPlayer([
                 "/assets/sfx/stun.ogg",
+                "/assets/sfx/jump.ogg",
             ]);
 
             // Player ground collision
@@ -123,6 +129,11 @@ export class Player {
             
             world.addEventListener('endContact', (event: any) => {
                 this.isCollidingWithGround = false;
+            });
+
+            // document on mouseSensitivityChanged
+            document.addEventListener('mouseSensitivityChanged', (event: any) => {
+                this.pointerControls!.pointerSpeed = event.detail.mouseSensitivity;
             });
             
         }
@@ -143,8 +154,9 @@ export class Player {
 
         // Pointer lock controls
         this.pointerControls = new PointerLockControls(this.camera, document.body);
+        this.pointerControls.pointerSpeed = this.sensetivity as number;
         document.addEventListener('click', () => {
-            if (this.gameOver || this.isStunned) return;
+            if (this.gameOver || this.isStunned || this.settingsMenu!.isOpen()) return;
 
             this.pointerControls?.lock();
 
@@ -191,6 +203,7 @@ export class Player {
 
     private jump() {
         if (this.isCollidingWithGround || this.jumpCount < this.MAX_JUMPS) {
+            this.audioPlayer?.playSoundAtIndex(1);
             this.playerBody!.velocity.y = this.JUMP_FORCE;
             this.jumpCount++;
         }
@@ -218,25 +231,25 @@ export class Player {
                     // Here, we maintain the direction of velocity, but just scale it down
                     this.velocity?.scale(this.currentSpeed / (this.velocity?.length() || 1), this.velocity);
                 }
-            }
-        
-            this.playerBody!.velocity.x = this.velocity!.x;
-            this.playerBody!.velocity.z = this.velocity!.z;
+                this.playerBody!.velocity.x = this.velocity!.x;
+                this.playerBody!.velocity.z = this.velocity!.z;
 
-            let bopOffset = { x: 0, y: 0, z: 0 }
-            if (this.isOnGround && this.cameraBop) {
-                bopOffset = this.cameraBop.update(delta, this.currentSpeed);
-            }
-            let newPosY = this.playerBody!.position.y + this.PLAYER_HEIGHT + bopOffset.y;
-            this.camera!.position.set(this.playerBody!.position.x, newPosY, this.playerBody!.position.z);
-
-            if (this.IsTagged) {
-                if (this.playerLookInteraction) {
-                    this.lookingAtPlayer = this.playerLookInteraction.checkPlayerLook();
+                let bopOffset = { x: 0, y: 0, z: 0 }
+                if (this.isOnGround && this.cameraBop) {
+                    bopOffset = this.cameraBop.update(delta, this.currentSpeed);
                 }
-            }
+                let newPosY = this.playerBody!.position.y + this.PLAYER_HEIGHT + bopOffset.y;
+                
+                this.camera!.position.set(this.playerBody!.position.x, newPosY, this.playerBody!.position.z);
 
-            if (this.onOwnerMoveCallback) this.onOwnerMoveCallback(this);
+                if (this.IsTagged) {
+                    if (this.playerLookInteraction) {
+                        this.lookingAtPlayer = this.playerLookInteraction.checkPlayerLook();
+                    }
+                }
+
+                if (this.onOwnerMoveCallback) this.onOwnerMoveCallback(this);
+            }
         } else {
             this.playerBody!.velocity.x = 0;
             this.playerBody!.velocity.z = 0;
@@ -334,5 +347,13 @@ export class Player {
         setTimeout(() => {
             this.isStunned = false;
         }, seconds * 1000);
+    }
+
+    public togglePointerControls() {
+        if (this.pointerControls?.isLocked) {
+            this.pointerControls.unlock();
+        } else {
+            this.pointerControls?.lock();
+        }
     }
 }

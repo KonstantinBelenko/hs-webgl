@@ -87,4 +87,10 @@ export class Map {
         return mesh;
     }
 
+    public getMeshes(): THREE.Mesh[] {
+        return this.scene.children.filter((child) => {
+            return (child as THREE.Mesh).isMesh;
+        }) as THREE.Mesh[];
+    }
+
 }

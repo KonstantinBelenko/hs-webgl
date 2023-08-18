@@ -4,6 +4,8 @@ import { WSClient } from "./WSClient/WSClient.js";
 import { ScoreDisplay } from "./UI/ScoreDisplay.js";
 import { TimerDisplay } from "./UI/TimerDisplay.js";
 import { TaggedIndicator } from './UI/TaggedIndicator.js';
+import { SettingsMenu } from "./UI/SettingsMenu.js";
+import { DefaultUserSettings } from "./Utils/UserSettings.js";
 
 export class GameClient {
 
@@ -20,8 +22,17 @@ export class GameClient {
     private scoreDisplay: ScoreDisplay | null = null;
     private timerDisplay: TimerDisplay | null = null;
     private taggedIndicator: TaggedIndicator = new TaggedIndicator();
+    private settingsMenu = new SettingsMenu(DefaultUserSettings);
 
-    constructor() { }
+    constructor() {
+        document.addEventListener("keydown", (event) => {
+            if (event.keyCode === 9) {
+                event.preventDefault();
+                this.settingsMenu.toggle();
+                this.lobby?.ownerPlayer?.togglePointerControls();
+            }
+        });
+    }
 
     public async startLobby(name: string) {
         console.log("Starting lobby");
@@ -34,6 +45,7 @@ export class GameClient {
                 this.playerName,
                 lobbyId,
                 true,
+                this.settingsMenu,
                 // On owner spawn
                 player => this.WSClient?.broadcastOwnerSpawn(
                     player.getLocationVector(),
@@ -99,6 +111,7 @@ export class GameClient {
                 this.playerName,
                 id,
                 false,
+                this.settingsMenu,
                 // On owner spawn
                 player => this.WSClient?.broadcastOwnerSpawn(
                     player.getLocationVector(),

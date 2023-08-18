@@ -7,6 +7,7 @@ import { Map } from "../Objects/Map.js";
 import * as CANNON from 'cannon-es';
 import Text2D from "../Objects/Text.js";
 import { EndGameMenu } from "../UI/EndGameMenu.js";
+import { SettingsMenu } from "../UI/SettingsMenu.js";
 
 export class Lobby {
 
@@ -37,6 +38,7 @@ export class Lobby {
         playerName: string, 
         lobbyId: string,
         isAdmin: boolean,
+        settingsMenu: SettingsMenu,
         onOwnerSpawnCallback: (player: Player) => void, 
         onPlayerMove: (player: Player) => void, 
         onAnimate: () => void,
@@ -53,7 +55,7 @@ export class Lobby {
         document.body.appendChild( this.stats.dom );
 
         this.loadLevel().then(() => {
-            this.loadPlayer(playerName);
+            this.loadPlayer(playerName, settingsMenu);
             this.animate();
         }).catch((error) => {
             console.error(error);
@@ -101,7 +103,7 @@ export class Lobby {
         );
     }
 
-    private loadPlayer(name: string) {
+    private loadPlayer(name: string, settingsMenu: SettingsMenu) {
 
         this.ownerPlayer = new Player(
             name, 
@@ -110,6 +112,7 @@ export class Lobby {
             this.world, 
             this.scene, 
             this.cssRenderer,
+            settingsMenu,
             this.otherPlayers,
             this.onOwnerMoveCallback,
             this.onOwnerTagSomeoneCallback,
