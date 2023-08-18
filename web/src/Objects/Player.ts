@@ -116,6 +116,8 @@ export class Player {
                 )
             }
             this.initMovementControls();
+            this.sensetivity = this.settingsMenu!.getMouseSensitivity();
+            this.pointerControls!.pointerSpeed = this.sensetivity as number;
             this.audioPlayer = new AudioPlayer([
                 "/assets/sfx/stun.ogg",
                 "/assets/sfx/jump.ogg",
