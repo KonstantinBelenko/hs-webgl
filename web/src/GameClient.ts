@@ -8,6 +8,7 @@ import { SettingsMenu } from "./UI/SettingsMenu.js";
 import { DefaultUserSettings } from "./Utils/UserSettings.js";
 import { LiveScoreDisplay } from "./UI/LiveScoreDisplay.js";
 import { AudioPlayer } from "./Utils/AudioPlayer.js";
+import { LoadingScreen } from "./UI/LoadingScreen.js";
 
 export class GameClient {
 
@@ -42,6 +43,8 @@ export class GameClient {
 
         this.isAdmin = true;
         this.playerName = name;
+        let loading = new LoadingScreen();
+        loading.show();
 
         this.WSClient = await WSClient.create(name, this.spawnLobbyPlayer.bind(this));
         await this.WSClient.createLobby((lobbyId: string) => {
@@ -73,6 +76,9 @@ export class GameClient {
                 this.startGame.bind(this),
             );
             navigator.clipboard.writeText(lobbyId);
+            setTimeout(() => {
+                loading.hide();
+            }, 1000);
         });
         this.WSClient.setOnPlayerMoveResponse((name: string, location: THREE.Vector3, rotation: THREE.Euler) => {
             if (this.lobby) this.lobby.moveOtherPlayer(
@@ -114,6 +120,9 @@ export class GameClient {
         this.isAdmin = false;
         this.playerName = name;
 
+        let loading = new LoadingScreen();
+        loading.show();
+
         this.WSClient = await WSClient.create(name, this.spawnLobbyPlayer.bind(this));
         await this.WSClient.joinLobby(lobbyId, (id: string) => {
             console.log("Joined lobby", lobbyId);
@@ -141,6 +150,9 @@ export class GameClient {
                     this.WSClient?.broadcastTagPlayer(tagged, tagger);
                 },
             )
+            setTimeout(() => {
+                loading.hide();
+            }, 1000);
         })
         this.WSClient.setOnPlayerMoveResponse((name: string, location: THREE.Vector3, rotation: THREE.Euler) => {
             if (this.lobby) this.lobby.moveOtherPlayer(
