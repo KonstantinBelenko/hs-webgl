@@ -21,7 +21,6 @@ export class GameClient {
 
     // UI
     private infoPanel: HTMLElement = document.getElementById("infoPanel") as HTMLElement;
-    private scoreDisplay: ScoreDisplay | null = null;
     private liveScoreDisplay: LiveScoreDisplay | null = null;
     private timerDisplay: TimerDisplay | null = null;
     private taggedIndicator: TaggedIndicator = new TaggedIndicator();
@@ -98,11 +97,9 @@ export class GameClient {
 
             this.setPlayerScore(thisPlayerScore?.score || 0);
             this.setGameTime(time);
-            this.scoreDisplay?.update(thisPlayerScore?.score || 0);
             this.timerDisplay?.update(time);
         });
         this.WSClient.setOnGameStartedCallback(() => {
-            this.scoreDisplay = new ScoreDisplay(0);
             this.timerDisplay = new TimerDisplay(60 * 3);
             this.liveScoreDisplay = new LiveScoreDisplay(this.lobby?.ownerPlayer?.getName()!);
             this.liveScoreDisplay.show();
@@ -166,11 +163,9 @@ export class GameClient {
 
             this.setPlayerScore(thisPlayerScore?.score || 0);
             this.setGameTime(time);
-            this.scoreDisplay?.update(thisPlayerScore?.score || 0);
             this.timerDisplay?.update(time);
         });
         this.WSClient.setOnGameStartedCallback(() => {
-            this.scoreDisplay = new ScoreDisplay(0);
             this.timerDisplay = new TimerDisplay(60 * 3);
             this.liveScoreDisplay = new LiveScoreDisplay(this.lobby?.ownerPlayer?.getName()!);
         });
@@ -190,15 +185,19 @@ export class GameClient {
 
     public renderInfoPanel() {
         this.infoPanel.style.display = "block";
+        // this.infoPanel.innerText = `
+        //     Name: ${this.playerName}
+        //     Score: ${this.getPlayerScore()}
+        //     Time Left: ${this.getGameTime()}
+        //     Admin: ${this.isAdmin}
+        //     Tagged: ${this.lobby?.ownerPlayer?.getTagged() ? "Yes" : "No"}
+        //     TO RUN - PRESS Left Shift
+        //     ${this.isAdmin ? "TO START GAME - PRESS F2" : ""}
+        // `
         this.infoPanel.innerText = `
             Name: ${this.playerName}
-            Score: ${this.getPlayerScore()}
-            Time Left: ${this.getGameTime()}
-            Admin: ${this.isAdmin}
-            Tagged: ${this.lobby?.ownerPlayer?.getTagged() ? "Yes" : "No"}
-            TO RUN - PRESS Left Shift
             ${this.isAdmin ? "TO START GAME - PRESS F2" : ""}
-        `
+            `
     }
 
     public setPlayerScore(score: number) {
