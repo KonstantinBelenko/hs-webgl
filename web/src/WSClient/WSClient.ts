@@ -104,8 +104,9 @@ export class WSClient {
         if (type === ResponseType.SCORE_AND_TIME) {
             console.log("Score and time");
             let data = res.ScoreAndTimeResponse();
+            console.log(data);
             if (this.onScoreAndTimeCallback) this.onScoreAndTimeCallback(
-                data.score,
+                data.scores,
                 data.time,
             );
         }
@@ -193,7 +194,7 @@ export class WSClient {
         this.onGameStartedCallback = onGameStarted;
     }
 
-    public setOnScoreAndTimeCallback(onScoreAndTime: (score: number, time: number) => void) {
+    public setOnScoreAndTimeCallback(onScoreAndTime: (scores: { name: string, score: number}[], time: number) => void) {
         this.onScoreAndTimeCallback = onScoreAndTime;
     }
 

@@ -6,6 +6,8 @@ import { TimerDisplay } from "./UI/TimerDisplay.js";
 import { TaggedIndicator } from './UI/TaggedIndicator.js';
 import { SettingsMenu } from "./UI/SettingsMenu.js";
 import { DefaultUserSettings } from "./Utils/UserSettings.js";
+import { LiveScoreDisplay } from "./UI/LiveScoreDisplay.js";
+import { AudioPlayer } from "./Utils/AudioPlayer.js";
 
 export class GameClient {
 
@@ -20,9 +22,11 @@ export class GameClient {
     // UI
     private infoPanel: HTMLElement = document.getElementById("infoPanel") as HTMLElement;
     private scoreDisplay: ScoreDisplay | null = null;
+    private liveScoreDisplay: LiveScoreDisplay | null = null;
     private timerDisplay: TimerDisplay | null = null;
     private taggedIndicator: TaggedIndicator = new TaggedIndicator();
     private settingsMenu = new SettingsMenu(DefaultUserSettings);
+    private backgroundMusic: AudioPlayer | null = null;
 
     constructor() {
         document.addEventListener("keydown", (event) => {
@@ -36,6 +40,7 @@ export class GameClient {
 
     public async startLobby(name: string) {
         console.log("Starting lobby");
+
         this.isAdmin = true;
         this.playerName = name;
 
@@ -83,20 +88,28 @@ export class GameClient {
                 this.taggedIndicator.show();
                 this.lobby?.ownerPlayer?.stun(1);
             }
-            if (tagger === this.playerName) this.taggedIndicator.hide();
+            if (tagger === this.playerName) {
+                this.taggedIndicator.hide();
+            }
         });
-        this.WSClient.setOnScoreAndTimeCallback((score: number, time: number) => {
-            this.setPlayerScore(score);
+        this.WSClient.setOnScoreAndTimeCallback((scores: { name: string, score: number}[], time: number)=> {
+            let thisPlayerScore = scores.find(s => s.name === this.playerName);
+            this.liveScoreDisplay?.update(scores);
+
+            this.setPlayerScore(thisPlayerScore?.score || 0);
             this.setGameTime(time);
-            this.scoreDisplay?.update(score);
+            this.scoreDisplay?.update(thisPlayerScore?.score || 0);
             this.timerDisplay?.update(time);
         });
         this.WSClient.setOnGameStartedCallback(() => {
             this.scoreDisplay = new ScoreDisplay(0);
             this.timerDisplay = new TimerDisplay(60 * 3);
+            this.liveScoreDisplay = new LiveScoreDisplay(this.lobby?.ownerPlayer?.getName()!);
+            this.liveScoreDisplay.show();
         });
         this.WSClient.setOnEndGameCallback((scores: { name: string, score: number }[]) => {
             this.lobby?.gameOver(scores);
+            this.liveScoreDisplay?.hide();
         });
     }
 
@@ -147,18 +160,23 @@ export class GameClient {
             }
             if (tagger === this.playerName) this.taggedIndicator.hide();
         });
-        this.WSClient.setOnScoreAndTimeCallback((score: number, time: number) => {
-            this.setPlayerScore(score);
+        this.WSClient.setOnScoreAndTimeCallback((scores: { name: string, score: number}[], time: number)=> {
+            let thisPlayerScore = scores.find(s => s.name === this.playerName);
+            this.liveScoreDisplay?.update(scores);
+
+            this.setPlayerScore(thisPlayerScore?.score || 0);
             this.setGameTime(time);
-            this.scoreDisplay?.update(score);
+            this.scoreDisplay?.update(thisPlayerScore?.score || 0);
             this.timerDisplay?.update(time);
         });
         this.WSClient.setOnGameStartedCallback(() => {
             this.scoreDisplay = new ScoreDisplay(0);
             this.timerDisplay = new TimerDisplay(60 * 3);
+            this.liveScoreDisplay = new LiveScoreDisplay(this.lobby?.ownerPlayer?.getName()!);
         });
         this.WSClient.setOnEndGameCallback((scores: { name: string, score: number }[]) => {
             this.lobby?.gameOver(scores);
+            this.liveScoreDisplay?.hide();
         });
     }
 

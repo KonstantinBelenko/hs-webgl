@@ -105,7 +105,7 @@ export class SettingsMenu {
 
     // Optional: Getter for the mouse sensitivity value
     getMouseSensitivity(): number {
-        return parseInt(this.slider.value);
+        return this.userSettings.get('mouseSensitivity') || 5;
     }
 
     toggle() {

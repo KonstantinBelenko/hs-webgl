@@ -26,9 +26,10 @@ export class AudioPlayer {
     }
     
 
-    playSoundAtIndex(index: number) {
+    playSoundAtIndex(index: number, loop?: boolean) {
         if (index >= 0 && index < this.sounds.length && this.sounds[index]) {
             const soundToPlay = this.sounds[index];
+            soundToPlay.setLoop(loop || false);
             soundToPlay.play();
         } else {
             console.error('Invalid index provided.');
@@ -47,9 +48,10 @@ export class AudioPlayer {
         if (this.sounds.length > 0 && this.sounds[0]) {
             const soundToPlay = this.sounds[0].clone();
             soundToPlay.play();
+        } else {
+            console.error('No sounds loaded.');
         }
     }
-    
 }
 
 // Usage:

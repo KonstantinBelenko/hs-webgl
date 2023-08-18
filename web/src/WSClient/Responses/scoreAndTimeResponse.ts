@@ -1,26 +1,31 @@
 import { BaseResponse, IBaseResponse } from "./baseResponse.js";
 import { ResponseType } from "./types/index.js";
 
+interface Score {
+    name: string;
+    score: number;
+}
+
 interface IScoreAndTimeResponse extends IBaseResponse {
     time: number;
-    score: number;
+    scores: Score[];
 }
 
 export class ScoreAndTimeResponse extends BaseResponse {
     
-    public score: number;
+    public scores: Score[];
     public time: number;
 
-    constructor(scores: number, time: number) {
+    constructor(scores: Score[], time: number) {
         super(ResponseType.SCORE_AND_TIME);
         this.time = time;
-        this.score = scores;
+        this.scores = scores;
     }
 
     public override get(): IScoreAndTimeResponse {
         return {
             ...super.get(),
-            score: this.score,
+            scores: this.scores,
             time: this.time,
         };
     }

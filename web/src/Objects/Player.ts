@@ -38,7 +38,6 @@ export class Player {
     private velocity: CANNON.Vec3 | null = null;
     private playerBody: CANNON.Body | null = null;
     private playerBodyMesh: THREE.Mesh | null = null;
-    private isOnGround: boolean = false;
     
     private jumpCount: number = 0;
     private MAX_JUMPS: number = 2;
@@ -116,12 +115,17 @@ export class Player {
                 )
             }
             this.initMovementControls();
-            this.sensetivity = this.settingsMenu!.getMouseSensitivity();
+            this.sensetivity = settingsMenu!.getMouseSensitivity();
             this.pointerControls!.pointerSpeed = this.sensetivity as number;
             this.audioPlayer = new AudioPlayer([
                 "/assets/sfx/stun.ogg",
                 "/assets/sfx/jump.ogg",
+                "/assets/sfx/tag.ogg",
+                "/assets/audio/desert.ogg",
             ]);
+            setTimeout(() => {
+                this.audioPlayer?.playSoundAtIndex(3, true);
+            }, 1000);
 
             // Player ground collision
             world.addEventListener('beginContact', (event: any) => {
@@ -137,7 +141,6 @@ export class Player {
             document.addEventListener('mouseSensitivityChanged', (event: any) => {
                 this.pointerControls!.pointerSpeed = event.detail.mouseSensitivity;
             });
-            
         }
 
         // visualize player body
@@ -167,6 +170,7 @@ export class Player {
                 this.lookingAtPlayer.setTagged(true);
                 this.playerLookInteraction?.setDefaultActionUI();
                 if (this.onOwnerTaggedCallback) {
+                    this.audioPlayer?.playSoundAtIndex(2);
                     this.onOwnerTaggedCallback(this.lookingAtPlayer.getName(), this.name);
                 }
             } 
@@ -223,7 +227,8 @@ export class Player {
                     inputDirection.applyEuler(this.camera!.rotation);
             
                     // Increase the current speed by the acceleration value
-                    this.currentSpeed = Math.min(this.currentSpeed + this.ACCELERATION, this.MAX_SPEED * (this.isRunning ? 2 : 1));
+                    let maxSpeed = this.IsTagged ? this.MAX_SPEED : this.MAX_SPEED + this.MAX_SPEED * 0.10;
+                    this.currentSpeed = Math.min(this.currentSpeed + this.ACCELERATION, maxSpeed * (this.isRunning ? 2 : 1));
                     this.velocity?.copy(
                         new CANNON.Vec3(inputDirection.x, inputDirection.y, inputDirection.z)
                     ).scale(this.currentSpeed, this.velocity);
@@ -237,7 +242,7 @@ export class Player {
                 this.playerBody!.velocity.z = this.velocity!.z;
 
                 let bopOffset = { x: 0, y: 0, z: 0 }
-                if (this.isOnGround && this.cameraBop) {
+                if (this.isCollidingWithGround && this.cameraBop) {
                     bopOffset = this.cameraBop.update(delta, this.currentSpeed);
                 }
                 let newPosY = this.playerBody!.position.y + this.PLAYER_HEIGHT + bopOffset.y;
