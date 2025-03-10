@@ -13,7 +13,9 @@ import { StartGameRequest } from './Requests/startGameRequest.js';
 
 export class WSClient {
 
-    private websocket: WebSocket | null = new WebSocket("wss://black-meadow-2733.fly.dev/connect");
+    //https://server-holy-river-7357.fly.dev/
+    // private websocket: WebSocket | null = new WebSocket("wss://black-meadow-2733.fly.dev/connect");
+    private websocket: WebSocket | null = new WebSocket("wss://server-holy-river-7357.fly.dev/connect");
     // private websocket: WebSocket | null = new WebSocket("ws://localhost:8080/connect");
     private name: string = "";
 
